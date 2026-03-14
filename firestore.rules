@@ -1,0 +1,70 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: voters
+// Document ID: {voterId}
+// Fields:
+//   - name: string (required) - Elector's Name
+//   - epicNo: string (required) - EPIC Number
+//   - partSerialNo: int (required) - Part Serial Number
+//   - age: int (optional) - Age
+//   - status: string (optional, enum: A, B, Shifted, Dead, Other, Pending) - Mapping status
+//   - comments: string (optional) - Extra comments
+//   - phoneNumber: string (optional) - Phone number
+//   - updatedAt: timestamp (optional) - Last update timestamp
+//   - updatedBy: string (optional) - UID of the user who last updated this record
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidVoter(data) {
+      return data.keys().hasAll(['name', 'epicNo', 'partSerialNo']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.epicNo is string && data.epicNo.size() > 0 && data.epicNo.size() < 50 &&
+             data.partSerialNo is int &&
+             (!('age' in data) || data.age is int) &&
+             (!('status' in data) || data.status in ['A', 'B', 'Shifted', 'Dead', 'Other', 'Pending']) &&
+             (!('comments' in data) || (data.comments is string && data.comments.size() < 1000)) &&
+             (!('phoneNumber' in data) || (data.phoneNumber is string && data.phoneNumber.size() < 20)) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp) &&
+             (!('updatedBy' in data) || data.updatedBy is string);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /voters/{voterId} {
+      // Allow authenticated users to read all voter data
+      allow read: if isAuthenticated();
+      
+      // Allow authenticated users to create or update voter data if valid
+      allow create: if isAuthenticated() && isValidVoter(request.resource.data);
+      allow update: if isAuthenticated() && isValidVoter(request.resource.data);
+      
+      // Only admins should delete, but for this app we'll allow authenticated users for now
+      // or restrict to owner if we had ownership, but voters are shared data.
+      allow delete: if isAuthenticated();
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}

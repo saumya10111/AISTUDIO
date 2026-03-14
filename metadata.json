@@ -1,0 +1,5 @@
+{
+  "name": "Voter Mapping Assistant",
+  "description": "App for mapping voters with status (A, B, Shifted, Dead), comments, and phone numbers.",
+  "requestFramePermissions": []
+}

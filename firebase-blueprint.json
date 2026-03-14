@@ -1,0 +1,31 @@
+{
+  "entities": {
+    "voter": {
+      "title": "Voter",
+      "description": "A voter record with mapping status and details.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Elector's Name" },
+        "epicNo": { "type": "string", "description": "EPIC Number" },
+        "partSerialNo": { "type": "integer", "description": "Part Serial Number" },
+        "age": { "type": "integer", "description": "Age" },
+        "status": { 
+          "type": "string", 
+          "enum": ["A", "B", "Shifted", "Dead", "Other", "Pending"],
+          "description": "Mapping status" 
+        },
+        "comments": { "type": "string", "description": "Extra comments" },
+        "phoneNumber": { "type": "string", "description": "Phone number" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp" },
+        "updatedBy": { "type": "string", "description": "UID of the user who last updated this record" }
+      },
+      "required": ["name", "epicNo", "partSerialNo"]
+    }
+  },
+  "firestore": {
+    "/voters/{voterId}": {
+      "schema": "voter",
+      "description": "Collection of voter records"
+    }
+  }
+}
